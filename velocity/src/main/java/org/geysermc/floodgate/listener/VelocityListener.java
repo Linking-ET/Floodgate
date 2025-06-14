@@ -25,12 +25,14 @@
 
 package org.geysermc.floodgate.listener;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.geysermc.floodgate.util.ReflectionUtils.getCastedValue;
 import static org.geysermc.floodgate.util.ReflectionUtils.getField;
 import static org.geysermc.floodgate.util.ReflectionUtils.getFieldOfType;
 import static org.geysermc.floodgate.util.ReflectionUtils.getPrefixedClass;
 import static org.geysermc.floodgate.util.ReflectionUtils.getPrefixedClassSilently;
 import static org.geysermc.floodgate.util.ReflectionUtils.getValue;
+import static org.geysermc.floodgate.util.ReflectionUtils.setValue;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -66,6 +68,7 @@ public final class VelocityListener {
     private static final Field INITIAL_MINECRAFT_CONNECTION;
     private static final Field INITIAL_CONNECTION_DELEGATE;
     private static final Field CHANNEL;
+    private static final Field PLAYER_NAME;
     private static final Property DEFAULT_TEXTURE_PROPERTY;
 
     static {
@@ -87,6 +90,9 @@ public final class VelocityListener {
         }
 
         CHANNEL = getFieldOfType(minecraftConnection, Channel.class);
+
+        PLAYER_NAME = getField(PreLoginEvent.class, "username");
+        checkNotNull(PLAYER_NAME, "PreLoginEvent username field cannot be null");
 
         DEFAULT_TEXTURE_PROPERTY = new Property(
                 "textures",
@@ -149,6 +155,7 @@ public final class VelocityListener {
         if (player != null) {
             event.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());
             playerCache.put(event.getConnection(), player);
+            setValue(event, PLAYER_NAME, player.getCorrectUsername());
         }
     }
 
